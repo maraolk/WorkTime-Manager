@@ -4,9 +4,15 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "mock": "json-server --watch mock-server/db.json --port 3000",
+    "dev": "run-p mock start",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "e2e": "playwright test",
+    "lint": "ng lint && stylelint \"src/**/*.scss\"",
+    "format": "prettier --write ."
   },
   "private": true,
   "packageManager": "npm@11.8.0",
@@ -17,6 +23,12 @@
     "@angular/forms": "^21.2.0",
     "@angular/platform-browser": "^21.2.0",
     "@angular/router": "^21.2.0",
+    "@ngrx/signals": "^21.1.0",
+    "@taiga-ui/cdk": "^5.3.0",
+    "@taiga-ui/core": "^5.3.0",
+    "@taiga-ui/kit": "^5.3.0",
+    "@taiga-ui/layout": "^5.3.0",
+    "json-server": "^1.0.0-beta.15",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },
@@ -24,8 +36,18 @@
     "@angular/build": "^21.2.8",
     "@angular/cli": "^21.2.8",
     "@angular/compiler-cli": "^21.2.0",
+    "@playwright/test": "^1.59.1",
+    "@types/jest": "^30.0.0",
+    "angular-eslint": "^21.3.1",
+    "eslint": "^10.2.1",
+    "jest": "^30.3.0",
+    "jest-environment-jsdom": "^30.3.0",
+    "jest-preset-angular": "^16.1.4",
     "jsdom": "^28.0.0",
+    "npm-run-all": "^4.1.5",
     "prettier": "^3.8.1",
+    "stylelint": "^17.9.0",
+    "stylelint-config-standard-scss": "^17.0.0",
     "typescript": "~5.9.2",
     "vitest": "^4.0.8"
   }
