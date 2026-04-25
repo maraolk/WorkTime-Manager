@@ -3,7 +3,15 @@ import { signalStore, withComputed, withMethods, withState, patchState } from '@
 import { firstValueFrom } from 'rxjs';
 
 import { AuthService } from '../auth/auth.service';
-import { EntryFilters, Project, TimeEntry, TimeEntryDraft, WorkTask } from '../models/time.model';
+import {
+  EntryFilters,
+  Project,
+  ProjectDraft,
+  TimeEntry,
+  TimeEntryDraft,
+  WorkTask,
+  WorkTaskDraft,
+} from '../models/time.model';
 import { isWithinPeriod, todayIso } from './date.util';
 import { ReportService } from './report.service';
 import { TimeApiService } from './time-api.service';
@@ -88,6 +96,129 @@ export const TimeStore = signalStore(
 
     setFilters(filters: Partial<EntryFilters>): void {
       patchState(store, { filters: { ...store.filters(), ...filters } });
+    },
+
+    async createProject(draft: ProjectDraft): Promise<void> {
+      const user = auth.user();
+
+      if (!user) {
+        return;
+      }
+
+      patchState(store, { loading: true, error: null });
+
+      try {
+        const project = await firstValueFrom(api.createProject(user.id, draft));
+        patchState(store, { projects: [...store.projects(), project], loading: false });
+      } catch (error) {
+        patchState(store, {
+          loading: false,
+          error: error instanceof Error ? error.message : 'Project create failed',
+        });
+      }
+    },
+
+    async updateProject(project: Project): Promise<void> {
+      patchState(store, { loading: true, error: null });
+
+      try {
+        const updated = await firstValueFrom(api.updateProject(project));
+        patchState(store, {
+          projects: store.projects().map((item) => (item.id === updated.id ? updated : item)),
+          loading: false,
+        });
+      } catch (error) {
+        patchState(store, {
+          loading: false,
+          error: error instanceof Error ? error.message : 'Project update failed',
+        });
+      }
+    },
+
+    async deleteProject(id: string): Promise<void> {
+      const hasEntries = store.entries().some((entry) => entry.projectId === id);
+
+      if (hasEntries) {
+        patchState(store, { error: 'Project with time entries cannot be deleted' });
+        return;
+      }
+
+      patchState(store, { loading: true, error: null });
+
+      try {
+        const tasksToDelete = store.tasks().filter((task) => task.projectId === id);
+
+        await Promise.all([
+          firstValueFrom(api.deleteProject(id)),
+          ...tasksToDelete.map((task) => firstValueFrom(api.deleteTask(task.id))),
+        ]);
+
+        patchState(store, {
+          projects: store.projects().filter((project) => project.id !== id),
+          tasks: store.tasks().filter((task) => task.projectId !== id),
+          loading: false,
+        });
+      } catch (error) {
+        patchState(store, {
+          loading: false,
+          error: error instanceof Error ? error.message : 'Project delete failed',
+        });
+      }
+    },
+
+    async createTask(draft: WorkTaskDraft): Promise<void> {
+      patchState(store, { loading: true, error: null });
+
+      try {
+        const task = await firstValueFrom(api.createTask(draft));
+        patchState(store, { tasks: [...store.tasks(), task], loading: false });
+      } catch (error) {
+        patchState(store, {
+          loading: false,
+          error: error instanceof Error ? error.message : 'Task create failed',
+        });
+      }
+    },
+
+    async updateTask(task: WorkTask): Promise<void> {
+      patchState(store, { loading: true, error: null });
+
+      try {
+        const updated = await firstValueFrom(api.updateTask(task));
+        patchState(store, {
+          tasks: store.tasks().map((item) => (item.id === updated.id ? updated : item)),
+          loading: false,
+        });
+      } catch (error) {
+        patchState(store, {
+          loading: false,
+          error: error instanceof Error ? error.message : 'Task update failed',
+        });
+      }
+    },
+
+    async deleteTask(id: string): Promise<void> {
+      const hasEntries = store.entries().some((entry) => entry.taskId === id);
+
+      if (hasEntries) {
+        patchState(store, { error: 'Task with time entries cannot be deleted' });
+        return;
+      }
+
+      patchState(store, { loading: true, error: null });
+
+      try {
+        await firstValueFrom(api.deleteTask(id));
+        patchState(store, {
+          tasks: store.tasks().filter((task) => task.id !== id),
+          loading: false,
+        });
+      } catch (error) {
+        patchState(store, {
+          loading: false,
+          error: error instanceof Error ? error.message : 'Task delete failed',
+        });
+      }
     },
 
     async createEntry(draft: TimeEntryDraft): Promise<void> {

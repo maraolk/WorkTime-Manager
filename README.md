@@ -45,7 +45,7 @@ npm run build    # production build
 
 ```text
 src/app/core       auth, interceptors, models, API services, Signal Store
-src/app/features   lazy-loaded pages
+src/app/features   lazy-loaded pages: login, dashboard, entries, projects, reports, settings
 src/app/shared     reusable UI components
 mock-server        json-server seed data
 docs               plan, UX concept, prototype

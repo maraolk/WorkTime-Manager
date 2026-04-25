@@ -7,12 +7,26 @@ export interface Project {
   color: string;
 }
 
+export interface ProjectDraft {
+  name: string;
+  client: string;
+  plannedHours: number;
+  color: string;
+}
+
 export interface WorkTask {
   id: string;
   projectId: string;
   title: string;
   plannedHours: number;
   status: 'todo' | 'active' | 'done';
+}
+
+export interface WorkTaskDraft {
+  projectId: string;
+  title: string;
+  plannedHours: number;
+  status: WorkTask['status'];
 }
 
 export interface TimeEntry {

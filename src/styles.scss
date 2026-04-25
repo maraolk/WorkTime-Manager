@@ -129,6 +129,9 @@ th {
 }
 
 .sidebar nav a {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
   border-radius: 8px;
   color: #c8d6d2;
   padding: 0.75rem 0.85rem;
@@ -286,13 +289,15 @@ th {
 }
 
 .entry-list,
-.summary-list {
+.summary-list,
+.management-list {
   display: grid;
   gap: 0.75rem;
 }
 
 .entry-list article,
-.summary-list article {
+.summary-list article,
+.management-list article {
   display: grid;
   grid-template-columns: 100px minmax(160px, 1fr) auto;
   gap: 0.75rem;
@@ -310,6 +315,35 @@ th {
 
 .summary-list article {
   grid-template-columns: minmax(180px, 1fr) minmax(160px, 320px) 48px;
+}
+
+.management-list article {
+  grid-template-columns: auto minmax(180px, 1fr) auto;
+}
+
+.management-list span:not(.swatch, .status-dot) {
+  display: block;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.swatch,
+.status-dot {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 999px;
+}
+
+.status-dot.todo {
+  background: var(--muted);
+}
+
+.status-dot.active {
+  background: var(--accent);
+}
+
+.status-dot.done {
+  background: #4f7d29;
 }
 
 progress {
@@ -367,7 +401,8 @@ progress {
   }
 
   .entry-list article,
-  .summary-list article {
+  .summary-list article,
+  .management-list article {
     grid-template-columns: 1fr;
   }
 }

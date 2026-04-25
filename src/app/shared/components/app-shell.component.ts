@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TuiButton } from '@taiga-ui/core/components/button';
+import { TuiIcon } from '@taiga-ui/core/components/icon';
 
 import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, TuiButton],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, TuiButton, TuiIcon],
   template: `
     <div class="shell">
       <aside class="sidebar" aria-label="Main navigation">
@@ -16,10 +17,26 @@ import { AuthService } from '../../core/auth/auth.service';
         </a>
 
         <nav>
-          <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
-          <a routerLink="/entries" routerLinkActive="active">Entries</a>
-          <a routerLink="/reports" routerLinkActive="active">Reports</a>
-          <a routerLink="/settings" routerLinkActive="active">Settings</a>
+          <a routerLink="/dashboard" routerLinkActive="active">
+            <tui-icon icon="@tui.chart-no-axes-combined" />
+            Dashboard
+          </a>
+          <a routerLink="/entries" routerLinkActive="active">
+            <tui-icon icon="@tui.clock-3" />
+            Entries
+          </a>
+          <a routerLink="/projects" routerLinkActive="active">
+            <tui-icon icon="@tui.folder-kanban" />
+            Projects
+          </a>
+          <a routerLink="/reports" routerLinkActive="active">
+            <tui-icon icon="@tui.file-spreadsheet" />
+            Reports
+          </a>
+          <a routerLink="/settings" routerLinkActive="active">
+            <tui-icon icon="@tui.settings" />
+            Settings
+          </a>
         </nav>
       </aside>
 
