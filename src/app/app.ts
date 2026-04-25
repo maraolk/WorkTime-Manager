@@ -1,12 +1,15 @@
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { TuiRoot } from '@taiga-ui/core/components/root';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
-  templateUrl: './app.html',
-  styleUrl: './app.scss',
+  imports: [RouterOutlet, TuiRoot],
+  template: `
+    <tui-root>
+      <router-outlet />
+    </tui-root>
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class App {
-  protected readonly title = signal('worktime-manager');
-}
+export class App {}
