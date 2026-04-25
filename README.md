@@ -1,59 +1,59 @@
-# WorktimeManager
+# WorkTime Manager
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.8.
+Angular 21 application for tracking working hours by projects and tasks. The project covers timer flow, manual time entries, project/task binding, reports, plan-vs-actual metrics, CSV export, authorization, protected routes and mock API integration.
 
-## Development server
+## Stack
 
-To start a local development server, run:
+- Angular 21 + TypeScript
+- Taiga UI 5
+- NgRx Signal Store
+- Mock API: json-server
+- Unit tests: Jest
+- Component/e2e tests: Playwright
+- Quality: ESLint, Prettier, Stylelint
 
-```bash
-ng serve
-```
+## Demo Accounts
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+| Email             | Password |
+| ----------------- | -------- |
+| arina@example.com | password |
+| ivan@example.com  | password |
 
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
+## Run Locally
 
 ```bash
-ng build
+npm install
+npm run dev
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+App: http://localhost:4200  
+Mock API: http://localhost:3000
 
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+## Useful Scripts
 
 ```bash
-ng test
+npm start        # Angular dev server
+npm run mock     # json-server mock API
+npm run dev      # app + mock API
+npm test         # Jest unit tests
+npm run e2e      # Playwright scenarios
+npm run lint     # ESLint + Stylelint
+npm run build    # production build
 ```
 
-## Running end-to-end tests
+## Structure
 
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
+```text
+src/app/core       auth, interceptors, models, API services, Signal Store
+src/app/features   lazy-loaded pages
+src/app/shared     reusable UI components
+mock-server        json-server seed data
+docs               plan, UX concept, prototype
+e2e                Playwright component scenarios
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+## Deployment
 
-## Additional Resources
+CI config is included for GitLab Pages in `.gitlab-ci.yml` and a generic GitHub CI workflow in `.github/workflows/ci.yml`. Public URL should be added here after enabling Pages/Vercel/Firebase in the course repository.
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Deploy URL: `TODO: add after first successful Pages/Vercel/Firebase deployment`
