@@ -58,5 +58,7 @@ CI config is included for GitLab Pages in `.gitlab-ci.yml` and a generic GitHub 
 
 Deploy URL: https://worktime-manager-brown.vercel.app
 
+For GitHub Actions Vercel deploy, add repository secrets: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`.
+
 Lighthouse mobile report: [`docs/lighthouse.report.html`](docs/lighthouse.report.html)  
 Lighthouse screenshot: [`docs/lighthouse-summary.png`](docs/lighthouse-summary.png)
