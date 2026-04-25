@@ -54,6 +54,9 @@ e2e                Playwright component scenarios
 
 ## Deployment
 
-CI config is included for GitLab Pages in `.gitlab-ci.yml` and a generic GitHub CI workflow in `.github/workflows/ci.yml`. Public URL should be added here after enabling Pages/Vercel/Firebase in the course repository.
+CI config is included for GitLab Pages in `.gitlab-ci.yml` and a generic GitHub CI workflow in `.github/workflows/ci.yml`. The current public deployment is published on Vercel.
 
-Deploy URL: `TODO: add after first successful Pages/Vercel/Firebase deployment`
+Deploy URL: https://worktime-manager-brown.vercel.app
+
+Lighthouse mobile report: [`docs/lighthouse.report.html`](docs/lighthouse.report.html)  
+Lighthouse screenshot: [`docs/lighthouse-summary.png`](docs/lighthouse-summary.png)
