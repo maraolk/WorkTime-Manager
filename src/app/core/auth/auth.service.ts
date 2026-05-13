@@ -1,13 +1,14 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { map, tap } from 'rxjs';
+import { map, switchMap, tap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { AuthSession, User } from '../models/user.model';
+import { AuthSession, RegisterPayload, User } from '../models/user.model';
 
 const TOKEN_KEY = 'worktime.token';
 const USER_KEY = 'worktime.user';
+const REGISTERED_USERS_KEY = 'worktime.registeredUsers';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -28,22 +29,47 @@ export class AuthService {
           const user = users.at(0);
 
           if (!user) {
-            throw new Error('Invalid email or password');
+            const localUser = this.readRegisteredUsers().find(
+              (item) => item.email === email && item.password === password,
+            );
+
+            if (!localUser) {
+              throw new Error('Invalid email or password');
+            }
+
+            return this.createSession(localUser);
           }
 
-          const session: AuthSession = {
-            token: `mock-jwt-${user.id}-${Date.now()}`,
-            user: {
-              id: user.id,
-              name: user.name,
-              email: user.email,
-              role: user.role,
-              dailyGoalHours: user.dailyGoalHours,
-            },
+          return this.createSession(user);
+        }),
+        tap((session) => this.persistSession(session)),
+      );
+  }
+
+  register(payload: RegisterPayload) {
+    return this.http
+      .get<User[]>(`${environment.apiUrl}/users`, { params: { email: payload.email } })
+      .pipe(
+        switchMap((users) => {
+          const existsInStorage = this.readRegisteredUsers().some(
+            (user) => user.email === payload.email,
+          );
+
+          if (users.length || existsInStorage) {
+            throw new Error('User with this email already exists');
+          }
+
+          const user: User = {
+            id: crypto.randomUUID(),
+            role: 'freelancer',
+            ...payload,
           };
 
-          return session;
+          this.saveRegisteredUser(user);
+
+          return this.http.post<User>(`${environment.apiUrl}/users`, user).pipe(map(() => user));
         }),
+        map((user) => this.createSession(user)),
         tap((session) => this.persistSession(session)),
       );
   }
@@ -73,6 +99,40 @@ export class AuthService {
     localStorage.setItem(USER_KEY, JSON.stringify(session.user));
     this.tokenState.set(session.token);
     this.userState.set(session.user);
+  }
+
+  private createSession(user: User): AuthSession {
+    return {
+      token: `mock-jwt-${user.id}-${Date.now()}`,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        dailyGoalHours: user.dailyGoalHours,
+      },
+    };
+  }
+
+  private readRegisteredUsers(): User[] {
+    const raw = localStorage.getItem(REGISTERED_USERS_KEY);
+
+    if (!raw) {
+      return [];
+    }
+
+    try {
+      return JSON.parse(raw) as User[];
+    } catch {
+      localStorage.removeItem(REGISTERED_USERS_KEY);
+      return [];
+    }
+  }
+
+  private saveRegisteredUser(user: User): void {
+    const users = this.readRegisteredUsers().filter((item) => item.email !== user.email);
+
+    localStorage.setItem(REGISTERED_USERS_KEY, JSON.stringify([...users, user]));
   }
 
   private readUser(): AuthSession['user'] | null {

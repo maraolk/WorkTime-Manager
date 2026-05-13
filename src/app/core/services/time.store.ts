@@ -32,8 +32,8 @@ const initialState: TimeState = {
   filters: {
     query: '',
     projectId: '',
-    dateFrom: todayIso(),
-    dateTo: todayIso(),
+    dateFrom: '',
+    dateTo: '',
     sortBy: 'date-desc',
   },
   loading: false,

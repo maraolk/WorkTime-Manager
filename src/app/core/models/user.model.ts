@@ -11,3 +11,10 @@ export interface AuthSession {
   token: string;
   user: Omit<User, 'password'>;
 }
+
+export interface RegisterPayload {
+  name: string;
+  email: string;
+  password: string;
+  dailyGoalHours: number;
+}

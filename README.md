@@ -12,12 +12,9 @@ Angular 21 application for tracking working hours by projects and tasks. The pro
 - Component/e2e tests: Playwright
 - Quality: ESLint, Prettier, Stylelint
 
-## Demo Accounts
+## Authentication
 
-| Email             | Password |
-| ----------------- | -------- |
-| arina@example.com | password |
-| ivan@example.com  | password |
+Users can create an account from the login page. The app stores the current session token and user preferences in `localStorage`, while account creation and login go through the mock API.
 
 ## Run Locally
 
