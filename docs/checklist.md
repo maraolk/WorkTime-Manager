@@ -14,7 +14,7 @@
 | State management                   | Готово | `src/app/core/services/time.store.ts`                     |
 | Guards                             | Готово | `src/app/core/auth/auth.guard.ts`                         |
 | Interceptor                        | Готово | `src/app/core/http/auth.interceptor.ts`                   |
-| Jest 10-15 тестов                  | Готово | 14 тестов                                                 |
+| Jest 10-15 тестов                  | Готово | 18 тестов                                                 |
 | Playwright 2-3 сценария            | Готово | 7 сценариев                                               |
 | CI/CD pipeline                     | Готово | `.gitlab-ci.yml`, `.github/workflows/ci.yml`              |
 | Публичный деплой                   | Готово | https://worktime-manager-brown.vercel.app                 |
