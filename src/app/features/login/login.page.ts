@@ -7,7 +7,7 @@ import { TuiTitle } from '@taiga-ui/core/components/title';
 
 import { AuthService } from '../../core/auth/auth.service';
 
-type AuthMode = 'login' | 'register';
+type AuthMode = 'login' | 'register' | 'reset';
 
 @Component({
   selector: 'app-login-page',
@@ -43,8 +43,29 @@ type AuthMode = 'login' | 'register';
               }
               Sign in
             </button>
+
+            <div class="auth-actions" aria-label="Account actions">
+              <button
+                tuiButton
+                type="button"
+                appearance="flat"
+                size="s"
+                (click)="setMode('reset')"
+              >
+                Forgot password?
+              </button>
+              <button
+                tuiButton
+                type="button"
+                appearance="secondary"
+                size="s"
+                (click)="setMode('register')"
+              >
+                Create a new account
+              </button>
+            </div>
           </form>
-        } @else {
+        } @else if (mode() === 'register') {
           <form [formGroup]="registerForm" (ngSubmit)="register()" aria-label="Registration form">
             <label>
               Name
@@ -76,12 +97,34 @@ type AuthMode = 'login' | 'register';
               }
               Create account
             </button>
+
+            <button tuiButton type="button" appearance="flat" size="s" (click)="setMode('login')">
+              I already have an account
+            </button>
+          </form>
+        } @else {
+          <form [formGroup]="resetForm" (ngSubmit)="recoverPassword()" aria-label="Password reset form">
+            <label>
+              Email
+              <input type="email" formControlName="email" autocomplete="email" />
+            </label>
+
+            @if (info()) {
+              <p class="form-info" role="status">{{ info() }}</p>
+            }
+
+            <button tuiButton type="submit" [disabled]="loading()">
+              @if (loading()) {
+                <tui-loader size="s" [inheritColor]="true" />
+              }
+              Send recovery link
+            </button>
+
+            <button tuiButton type="button" appearance="flat" size="s" (click)="setMode('login')">
+              Back to sign in
+            </button>
           </form>
         }
-
-        <button tuiButton type="button" appearance="flat" size="s" (click)="toggleMode()">
-          {{ mode() === 'login' ? 'Create a new account' : 'I already have an account' }}
-        </button>
       </section>
     </main>
   `,
@@ -95,15 +138,27 @@ export class LoginPage {
   protected readonly mode = signal<AuthMode>('login');
   protected readonly loading = signal(false);
   protected readonly error = signal('');
-  protected readonly title = computed(() =>
-    this.mode() === 'login' ? 'Sign in to your workspace' : 'Create your workspace',
-  );
-  protected readonly subtitle = computed(() =>
-    this.mode() === 'login'
-      ? 'Use your account to continue tracking projects, tasks and reports.'
-      : 'Register an account and set your first daily time goal.',
-  );
-
+  protected readonly info = signal('');
+  protected readonly title = computed(() => {
+    switch (this.mode()) {
+      case 'register':
+        return 'Create your workspace';
+      case 'reset':
+        return 'Recover your password';
+      default:
+        return 'Sign in to your workspace';
+    }
+  });
+  protected readonly subtitle = computed(() => {
+    switch (this.mode()) {
+      case 'register':
+        return 'Register an account and set your first daily time goal.';
+      case 'reset':
+        return 'Enter your email and we will send a mock recovery link.';
+      default:
+        return 'Use your account to continue tracking projects, tasks and reports.';
+    }
+  });
   protected readonly loginForm = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(4)]],
@@ -114,6 +169,10 @@ export class LoginPage {
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(4)]],
     dailyGoalHours: [8, [Validators.required, Validators.min(1), Validators.max(16)]],
+  });
+
+  protected readonly resetForm = this.fb.group({
+    email: ['', [Validators.required, Validators.email]],
   });
 
   login(): void {
@@ -156,9 +215,29 @@ export class LoginPage {
     });
   }
 
-  toggleMode(): void {
+  recoverPassword(): void {
+    this.resetForm.markAllAsTouched();
+
+    if (this.resetForm.invalid) {
+      return;
+    }
+
+    this.loading.set(true);
     this.error.set('');
+    this.info.set('');
+
+    const email = this.resetForm.controls.email.value;
+
+    this.info.set(
+      `If an account for ${email} exists, a recovery link has been sent by the mock server.`,
+    );
     this.loading.set(false);
-    this.mode.update((mode) => (mode === 'login' ? 'register' : 'login'));
+  }
+
+  setMode(mode: AuthMode): void {
+    this.error.set('');
+    this.info.set('');
+    this.loading.set(false);
+    this.mode.set(mode);
   }
 }

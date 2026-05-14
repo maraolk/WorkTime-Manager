@@ -66,3 +66,18 @@ test('user can register a new account', async ({ page }) => {
     await page.request.delete(`http://localhost:3000/users/${createdUser.id}`);
   }
 });
+
+test('user can request a password recovery link', async ({ page }) => {
+  await page.goto('/login');
+  await page.getByRole('button', { name: /forgot password/i }).click();
+  await expect(page.getByRole('heading', { name: /recover your password/i })).toBeVisible();
+
+  const resetForm = page.getByRole('form', { name: /password reset form/i });
+
+  await resetForm.getByLabel('Email').fill('arina@example.com');
+  await page.getByRole('button', { name: /send recovery link/i }).click();
+
+  await expect(page.getByRole('status')).toContainText(
+    'If an account for arina@example.com exists',
+  );
+});

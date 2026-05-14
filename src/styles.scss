@@ -234,14 +234,31 @@ th {
   gap: 1rem;
 }
 
+.auth-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
 .form-error,
+.form-info,
 .banner-error {
   margin: 0;
-  border: 1px solid rgb(179 38 30 / 25%);
   border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.form-error,
+.banner-error {
+  border: 1px solid rgb(179 38 30 / 25%);
   background: rgb(179 38 30 / 8%);
   color: var(--danger);
-  padding: 0.75rem;
+}
+
+.form-info {
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--line));
+  background: color-mix(in srgb, var(--accent) 9%, #fff);
+  color: var(--accent-strong);
 }
 
 .filters,
@@ -403,6 +420,10 @@ progress {
   .entry-list article,
   .summary-list article,
   .management-list article {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-actions {
     grid-template-columns: 1fr;
   }
 }
