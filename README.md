@@ -14,7 +14,7 @@ Angular 21 application for tracking working hours by projects and tasks. The pro
 
 ## Authentication
 
-Users can create an account from the login page, sign in, log out and request a mock password recovery link. The app stores the current session token and user preferences in `localStorage`, while account creation and login go through the mock API.
+Users can create an account from the login page, sign in, log out and request a mock password recovery link. The mock server does not send real email; it validates that the account exists and shows a demo reset link in the UI. The app stores the current session token and user preferences in `localStorage`, while account creation and login go through the mock API.
 
 ## Run Locally
 

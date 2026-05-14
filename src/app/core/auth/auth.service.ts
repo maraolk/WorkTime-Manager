@@ -1,10 +1,16 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { map, switchMap, tap } from 'rxjs';
+import { map, switchMap, tap, throwError } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { AuthSession, RegisterPayload, User } from '../models/user.model';
+import { AuthSession, PasswordRecovery, RegisterPayload, User } from '../models/user.model';
+import {
+  EMAIL_RULE_MESSAGE,
+  PASSWORD_RULE_MESSAGE,
+  isStrictEmail,
+  isStrongPassword,
+} from './auth-validation';
 
 const TOKEN_KEY = 'worktime.token';
 const USER_KEY = 'worktime.user';
@@ -47,6 +53,14 @@ export class AuthService {
   }
 
   register(payload: RegisterPayload) {
+    if (!isStrictEmail(payload.email)) {
+      return throwError(() => new Error(EMAIL_RULE_MESSAGE));
+    }
+
+    if (!isStrongPassword(payload.password)) {
+      return throwError(() => new Error(PASSWORD_RULE_MESSAGE));
+    }
+
     return this.http
       .get<User[]>(`${environment.apiUrl}/users`, { params: { email: payload.email } })
       .pipe(
@@ -72,6 +86,28 @@ export class AuthService {
         map((user) => this.createSession(user)),
         tap((session) => this.persistSession(session)),
       );
+  }
+
+  requestPasswordRecovery(email: string) {
+    if (!isStrictEmail(email)) {
+      return throwError(() => new Error(EMAIL_RULE_MESSAGE));
+    }
+
+    return this.http.get<User[]>(`${environment.apiUrl}/users`, { params: { email } }).pipe(
+      map((users): PasswordRecovery => {
+        const user =
+          users.at(0) ?? this.readRegisteredUsers().find((item) => item.email === email);
+
+        if (!user) {
+          throw new Error('No account found for this email');
+        }
+
+        return {
+          email: user.email,
+          resetLink: `${location.origin}/login?resetToken=mock-${user.id}`,
+        };
+      }),
+    );
   }
 
   logout(): void {

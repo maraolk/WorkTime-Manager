@@ -262,6 +262,18 @@ th {
   color: var(--accent-strong);
 }
 
+.field-error {
+  color: var(--danger);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.mock-link {
+  color: var(--accent-strong);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
 .filters,
 .timer-grid {
   display: grid;

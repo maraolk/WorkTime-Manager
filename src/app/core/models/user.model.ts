@@ -18,3 +18,8 @@ export interface RegisterPayload {
   password: string;
   dailyGoalHours: number;
 }
+
+export interface PasswordRecovery {
+  email: string;
+  resetLink: string;
+}
