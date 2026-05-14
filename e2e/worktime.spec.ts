@@ -42,7 +42,7 @@ test('user can open reports and export', async ({ page }) => {
   await page.getByRole('button', { name: /export csv/i }).click();
   const download = await downloadPromise;
 
-  expect(download.suggestedFilename()).toBe('worktime-report.csv');
+  expect(download.suggestedFilename()).toBe('worktime-report-all-projects-all-time.csv');
 });
 
 test('user can register a new account', async ({ page }) => {

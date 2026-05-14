@@ -1,6 +1,6 @@
 # WorkTime Manager
 
-Angular 21 application for tracking working hours by projects and tasks. The project covers timer flow, manual time entries, project/task binding, reports, plan-vs-actual metrics, CSV export, authorization, protected routes and mock API integration.
+Angular 21 application for tracking working hours by projects and tasks. The project covers timer flow, manual time entries, project/task binding, reports, plan-vs-actual metrics, CSV export with period-aware filenames, authorization, protected routes and mock API integration.
 
 ## Stack
 

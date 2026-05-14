@@ -347,6 +347,27 @@ th {
   grid-template-columns: minmax(180px, 1fr) minmax(160px, 320px) 48px;
 }
 
+.summary-list strong,
+.summary-list span {
+  display: block;
+}
+
+.summary-list small {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.summary-list article.summary-near-limit {
+  border-color: color-mix(in srgb, var(--warning) 45%, var(--line));
+}
+
+.summary-list article.summary-overrun {
+  border-color: color-mix(in srgb, var(--danger) 45%, var(--line));
+  background: rgb(179 38 30 / 4%);
+}
+
 .management-list article {
   grid-template-columns: auto minmax(180px, 1fr) auto;
 }

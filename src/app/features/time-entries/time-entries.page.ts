@@ -177,6 +177,10 @@ export class TimeEntriesPage implements OnInit {
   }
 
   protected async delete(id: string): Promise<void> {
+    if (!confirm('Delete this time entry?')) {
+      return;
+    }
+
     await this.store.deleteEntry(id);
   }
 

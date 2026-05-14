@@ -70,10 +70,25 @@ describe('ReportService', () => {
     expect(service.filterEntries(entries, { ...filters, sortBy: 'minutes-desc' })[0].id).toBe('e2');
   });
 
-  it('builds project summary with progress', () => {
+  it('builds project summary with progress and status', () => {
     const summary = service.buildProjectSummary(projects, entries);
 
-    expect(summary[0]).toMatchObject({ projectId: 'p1', actualHours: 1, progress: 10 });
+    expect(summary[0]).toMatchObject({
+      projectId: 'p1',
+      actualHours: 1,
+      progress: 10,
+      status: 'on-track',
+    });
+  });
+
+  it('marks projects as near limit or overrun', () => {
+    const summary = service.buildProjectSummary(projects, [
+      { ...entries[0], projectId: 'p1', minutes: 9 * 60 },
+      { ...entries[1], projectId: 'p2', minutes: 6 * 60 },
+    ]);
+
+    expect(summary[0].status).toBe('near-limit');
+    expect(summary[1].status).toBe('overrun');
   });
 
   it('exports quoted csv', () => {

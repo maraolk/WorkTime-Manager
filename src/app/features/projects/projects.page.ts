@@ -280,6 +280,10 @@ export class ProjectsPage implements OnInit {
   }
 
   protected async deleteProject(id: string): Promise<void> {
+    if (!confirm('Delete this project and its tasks?')) {
+      return;
+    }
+
     await this.store.deleteProject(id);
   }
 
@@ -323,6 +327,10 @@ export class ProjectsPage implements OnInit {
   }
 
   protected async deleteTask(id: string): Promise<void> {
+    if (!confirm('Delete this task?')) {
+      return;
+    }
+
     await this.store.deleteTask(id);
   }
 

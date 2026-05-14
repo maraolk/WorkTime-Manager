@@ -65,4 +65,5 @@ export interface ProjectSummary {
   plannedHours: number;
   actualHours: number;
   progress: number;
+  status: 'on-track' | 'near-limit' | 'overrun';
 }

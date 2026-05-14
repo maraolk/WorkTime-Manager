@@ -39,6 +39,7 @@ import { MetricCardComponent } from '../../shared/components/metric-card.compone
       <section class="metric-grid" aria-label="Time statistics">
         <app-metric-card label="Today" [value]="format(store.todayMinutes())" [note]="goalNote()" />
         <app-metric-card label="Goal progress" [value]="goalProgress() + '%'" note="Daily target" />
+        <app-metric-card label="Week" [value]="weekHours()" note="Last 7 days" />
         <app-metric-card
           label="Projects"
           [value]="store.projects().length.toString()"
@@ -183,6 +184,19 @@ export class DashboardPage implements OnInit {
     const minutes = this.store
       .entries()
       .filter((entry) => entry.date === todayIso() && entry.billable)
+      .reduce((sum, entry) => sum + entry.minutes, 0);
+
+    return `${minutesToHours(minutes)}h`;
+  }
+
+  protected weekHours(): string {
+    const today = new Date(todayIso());
+    const weekStart = new Date(today);
+    weekStart.setDate(today.getDate() - 6);
+    const from = weekStart.toISOString().slice(0, 10);
+    const minutes = this.store
+      .entries()
+      .filter((entry) => entry.date >= from && entry.date <= todayIso())
       .reduce((sum, entry) => sum + entry.minutes, 0);
 
     return `${minutesToHours(minutes)}h`;

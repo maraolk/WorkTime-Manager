@@ -68,10 +68,11 @@ import { MetricCardComponent } from '../../shared/components/metric-card.compone
         <h2>Project summary</h2>
         <div class="summary-list">
           @for (item of store.projectSummary(); track item.projectId) {
-            <article>
+            <article [class]="'summary-' + item.status">
               <div>
                 <strong>{{ item.projectName }}</strong>
                 <span>{{ item.actualHours }}h of {{ item.plannedHours }}h</span>
+                <small>{{ statusLabel(item.status) }}</small>
               </div>
               <progress
                 [value]="item.progress"
@@ -113,8 +114,30 @@ export class ReportsPage implements OnInit {
     const link = document.createElement('a');
 
     link.href = URL.createObjectURL(blob);
-    link.download = 'worktime-report.csv';
+    link.download = this.reportFilename();
     link.click();
     URL.revokeObjectURL(link.href);
+  }
+
+  protected reportFilename(): string {
+    const { dateFrom, dateTo, projectId } = this.store.filters();
+    const period = dateFrom || dateTo ? `${dateFrom || 'start'}-${dateTo || 'today'}` : 'all-time';
+    const project = projectId
+      ? this.store.projects().find((item) => item.id === projectId)?.name ?? 'project'
+      : 'all-projects';
+    const safeProject = project.toLowerCase().replaceAll(/[^a-z0-9]+/g, '-').replaceAll(/(^-|-$)/g, '');
+
+    return `worktime-report-${safeProject}-${period}.csv`;
+  }
+
+  protected statusLabel(status: 'on-track' | 'near-limit' | 'overrun'): string {
+    switch (status) {
+      case 'overrun':
+        return 'Over planned time';
+      case 'near-limit':
+        return 'Close to plan';
+      default:
+        return 'On track';
+    }
   }
 }

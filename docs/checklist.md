@@ -11,10 +11,12 @@
 | Разделение данных пользователей    | Готово | mock API фильтрует по `userId`                            |
 | CRUD основных сущностей            | Готово | `/entries`, `/projects`                                   |
 | Поиск, фильтрация, сортировка      | Готово | `/entries`, `/reports`                                    |
+| Защита удаления                    | Готово | confirm перед удалением записей, проектов и задач         |
+| Статусы план/факт                  | Готово | `/reports`, on track / close to plan / over planned time  |
 | State management                   | Готово | `src/app/core/services/time.store.ts`                     |
 | Guards                             | Готово | `src/app/core/auth/auth.guard.ts`                         |
 | Interceptor                        | Готово | `src/app/core/http/auth.interceptor.ts`                   |
-| Jest 10-15 тестов                  | Готово | 18 тестов                                                 |
+| Jest 10-15 тестов                  | Готово | 19 тестов                                                 |
 | Playwright 2-3 сценария            | Готово | 7 сценариев                                               |
 | CI/CD pipeline                     | Готово | `.gitlab-ci.yml`, `.github/workflows/ci.yml`              |
 | Публичный деплой                   | Готово | https://worktime-manager-brown.vercel.app                 |

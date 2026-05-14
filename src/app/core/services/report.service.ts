@@ -31,9 +31,11 @@ export class ReportService {
         .filter((entry) => entry.projectId === project.id)
         .reduce((sum, entry) => sum + entry.minutes, 0);
       const actualHours = minutesToHours(actualMinutes);
+      const ratio = project.plannedHours ? actualHours / project.plannedHours : 0;
       const progress = project.plannedHours
-        ? Math.min(100, Math.round((actualHours / project.plannedHours) * 100))
+        ? Math.min(100, Math.round(ratio * 100))
         : 0;
+      const status = ratio > 1 ? 'overrun' : ratio >= 0.8 ? 'near-limit' : 'on-track';
 
       return {
         projectId: project.id,
@@ -41,6 +43,7 @@ export class ReportService {
         plannedHours: project.plannedHours,
         actualHours,
         progress,
+        status,
       };
     });
   }
