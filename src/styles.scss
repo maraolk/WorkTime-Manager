@@ -90,12 +90,13 @@ th {
   display: grid;
   grid-template-columns: 240px minmax(0, 1fr);
   min-height: 100vh;
+  background: linear-gradient(90deg, #0f2223 0 240px, var(--bg) 240px);
 }
 
 .sidebar {
   position: sticky;
   top: 0;
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   gap: 2rem;
@@ -380,14 +381,18 @@ progress {
 }
 
 @media (width <= 980px) {
-  .shell,
+  .shell {
+    grid-template-columns: 1fr;
+    background: var(--bg);
+  }
+
   .split-layout {
     grid-template-columns: 1fr;
   }
 
   .sidebar {
     position: static;
-    height: auto;
+    min-height: auto;
   }
 
   .metric-grid {
