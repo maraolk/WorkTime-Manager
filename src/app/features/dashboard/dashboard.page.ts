@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  OnDestroy,
   OnInit,
   computed,
   inject,
@@ -39,6 +40,7 @@ import { MetricCardComponent } from '../../shared/components/metric-card.compone
       <section class="metric-grid" aria-label="Time statistics">
         <app-metric-card label="Today" [value]="format(store.todayMinutes())" [note]="goalNote()" />
         <app-metric-card label="Goal progress" [value]="goalProgress() + '%'" note="Daily target" />
+        <app-metric-card label="Week" [value]="weekHours()" note="Last 7 days" />
         <app-metric-card
           label="Projects"
           [value]="store.projects().length.toString()"
@@ -56,7 +58,7 @@ import { MetricCardComponent } from '../../shared/components/metric-card.compone
         <div class="timer-grid">
           <label>
             Project
-            <select [(ngModel)]="projectId">
+            <select [ngModel]="projectId()" (ngModelChange)="selectProject($event)">
               <option value="">Select project</option>
               @for (project of store.projects(); track project.id) {
                 <option [value]="project.id">{{ project.name }}</option>
@@ -66,7 +68,7 @@ import { MetricCardComponent } from '../../shared/components/metric-card.compone
 
           <label>
             Task
-            <select [(ngModel)]="taskId">
+            <select [ngModel]="taskId()" (ngModelChange)="taskId.set($event)">
               <option value="">Select task</option>
               @for (task of timerTasks(); track task.id) {
                 <option [value]="task.id">{{ task.title }}</option>
@@ -76,7 +78,7 @@ import { MetricCardComponent } from '../../shared/components/metric-card.compone
 
           <label class="wide">
             Description
-            <input [(ngModel)]="description" placeholder="Short work summary" />
+            <input [ngModel]="description()" (ngModelChange)="description.set($event)" placeholder="Short work summary" />
           </label>
         </div>
 
@@ -113,27 +115,43 @@ import { MetricCardComponent } from '../../shared/components/metric-card.compone
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DashboardPage implements OnInit {
+export class DashboardPage implements OnInit, OnDestroy {
   protected readonly store = inject(TimeStore);
   protected readonly startedAt = signal<number | null>(null);
+  protected readonly now = signal(Date.now());
   protected readonly timerTasks = computed(() =>
-    this.projectId ? this.store.tasks().filter((task) => task.projectId === this.projectId) : [],
+    this.projectId()
+      ? this.store.tasks().filter((task) => task.projectId === this.projectId())
+      : [],
   );
 
-  protected projectId = '';
-  protected taskId = '';
-  protected description = '';
+  protected readonly projectId = signal('');
+  protected readonly taskId = signal('');
+  protected readonly description = signal('');
+  private timerIntervalId: number | null = null;
 
   ngOnInit(): void {
     void this.store.load();
   }
 
+  ngOnDestroy(): void {
+    this.clearTimerInterval();
+  }
+
   protected canStart(): boolean {
-    return Boolean(this.projectId && this.taskId && this.description.trim());
+    return Boolean(this.projectId() && this.taskId() && this.description().trim());
+  }
+
+  protected selectProject(projectId: string): void {
+    this.projectId.set(projectId);
+    this.taskId.set('');
   }
 
   protected start(): void {
     this.startedAt.set(Date.now());
+    this.now.set(Date.now());
+    this.clearTimerInterval();
+    this.timerIntervalId = window.setInterval(() => this.now.set(Date.now()), 1000);
   }
 
   protected async stop(): Promise<void> {
@@ -145,23 +163,24 @@ export class DashboardPage implements OnInit {
 
     const minutes = Math.max(1, Math.round((Date.now() - started) / 60000));
     const draft: TimeEntryDraft = {
-      projectId: this.projectId,
-      taskId: this.taskId,
+      projectId: this.projectId(),
+      taskId: this.taskId(),
       date: todayIso(),
       minutes,
-      description: this.description,
+      description: this.description().trim(),
       billable: true,
     };
 
     await this.store.createEntry(draft);
     this.startedAt.set(null);
-    this.description = '';
+    this.description.set('');
+    this.clearTimerInterval();
   }
 
   protected runningLabel(): string {
     const started = this.startedAt();
 
-    return started ? `${Math.max(1, Math.round((Date.now() - started) / 60000))} min running` : '';
+    return started ? `${Math.max(1, Math.round((this.now() - started) / 60000))} min running` : '';
   }
 
   protected format(minutes: number): string {
@@ -188,9 +207,31 @@ export class DashboardPage implements OnInit {
     return `${minutesToHours(minutes)}h`;
   }
 
+  protected weekHours(): string {
+    const today = new Date(todayIso());
+    const weekStart = new Date(today);
+    weekStart.setDate(today.getDate() - 6);
+    const from = weekStart.toISOString().slice(0, 10);
+    const minutes = this.store
+      .entries()
+      .filter((entry) => entry.date >= from && entry.date <= todayIso())
+      .reduce((sum, entry) => sum + entry.minutes, 0);
+
+    return `${minutesToHours(minutes)}h`;
+  }
+
   protected projectName(projectId: string): string {
     return (
       this.store.projects().find((project) => project.id === projectId)?.name ?? 'Unknown project'
     );
+  }
+
+  private clearTimerInterval(): void {
+    if (this.timerIntervalId === null) {
+      return;
+    }
+
+    window.clearInterval(this.timerIntervalId);
+    this.timerIntervalId = null;
   }
 }

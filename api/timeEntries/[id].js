@@ -1,7 +1,7 @@
-const { data, readBody, send } = require('../_data');
+const { data, getResourceId, readBody, send } = require('../_data');
 
 module.exports = async (req, res) => {
-  const { id } = req.query;
+  const id = getResourceId(req);
   const index = data.timeEntries.findIndex((entry) => entry.id === id);
 
   if (index === -1) {

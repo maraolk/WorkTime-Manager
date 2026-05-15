@@ -243,6 +243,7 @@ th {
 
 .form-error,
 .form-info,
+.success-message,
 .banner-error {
   margin: 0;
   border-radius: 8px;
@@ -256,10 +257,23 @@ th {
   color: var(--danger);
 }
 
-.form-info {
+.form-info,
+.success-message {
   border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--line));
   background: color-mix(in srgb, var(--accent) 9%, #fff);
   color: var(--accent-strong);
+}
+
+.field-error {
+  color: var(--danger);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.mock-link {
+  color: var(--accent-strong);
+  font-weight: 700;
+  text-decoration: underline;
 }
 
 .filters,
@@ -333,6 +347,27 @@ th {
 
 .summary-list article {
   grid-template-columns: minmax(180px, 1fr) minmax(160px, 320px) 48px;
+}
+
+.summary-list strong,
+.summary-list span {
+  display: block;
+}
+
+.summary-list small {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.summary-list article.summary-near-limit {
+  border-color: color-mix(in srgb, var(--warning) 45%, var(--line));
+}
+
+.summary-list article.summary-overrun {
+  border-color: color-mix(in srgb, var(--danger) 45%, var(--line));
+  background: rgb(179 38 30 / 4%);
 }
 
 .management-list article {

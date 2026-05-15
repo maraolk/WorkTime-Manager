@@ -1,6 +1,6 @@
 # WorkTime Manager
 
-Angular 21 application for tracking working hours by projects and tasks. The project covers timer flow, manual time entries, project/task binding, reports, plan-vs-actual metrics, CSV export, authorization, protected routes and mock API integration.
+Angular 21 application for tracking working hours by projects and tasks. The project covers timer flow, manual time entries, project/task binding, reports, plan-vs-actual metrics, CSV export with period-aware filenames, authorization, protected routes and mock API integration.
 
 ## Stack
 
@@ -14,7 +14,7 @@ Angular 21 application for tracking working hours by projects and tasks. The pro
 
 ## Authentication
 
-Users can create an account from the login page, sign in, log out and request a mock password recovery link. The app stores the current session token and user preferences in `localStorage`, while account creation and login go through the mock API.
+Users can create an account from the login page, sign in, log out and request a mock password recovery link. The mock server does not send real email; it validates that the account exists and shows a demo reset link in the UI. The app stores the current session token and user preferences in `localStorage`, while account creation and login go through the mock API.
 
 ## Run Locally
 
@@ -45,7 +45,7 @@ src/app/core       auth, interceptors, models, API services, Signal Store
 src/app/features   lazy-loaded pages: login, dashboard, entries, projects, reports, settings
 src/app/shared     reusable UI components
 mock-server        json-server seed data
-docs               plan, UX concept, prototype
+docs               plan, UX concept, Figma prototype, git history notes
 e2e                Playwright component scenarios
 ```
 
@@ -59,3 +59,4 @@ For GitHub Actions Vercel deploy, add repository secrets: `VERCEL_TOKEN`, `VERCE
 
 Lighthouse mobile report: [`docs/lighthouse.report.html`](docs/lighthouse.report.html)  
 Lighthouse screenshot: [`docs/lighthouse-summary.png`](docs/lighthouse-summary.png)
+Git history and merge request notes: [`docs/git-history.md`](docs/git-history.md)

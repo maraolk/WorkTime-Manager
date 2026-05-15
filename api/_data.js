@@ -148,9 +148,24 @@ function applyQuery(items, query) {
   );
 }
 
+function getResourceId(req) {
+  const rawId = req.query?.id;
+
+  if (Array.isArray(rawId)) {
+    return rawId.at(0);
+  }
+
+  if (rawId) {
+    return rawId;
+  }
+
+  return req.url.split('?').at(0).split('/').filter(Boolean).at(-1);
+}
+
 module.exports = {
   applyQuery,
   data,
+  getResourceId,
   readBody,
   send,
 };

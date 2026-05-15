@@ -25,6 +25,12 @@ interface TimeState {
   error: string | null;
 }
 
+interface PersistedTimeState {
+  projects: Project[];
+  tasks: WorkTask[];
+  entries: TimeEntry[];
+}
+
 const initialState: TimeState = {
   projects: [],
   tasks: [],
@@ -38,6 +44,77 @@ const initialState: TimeState = {
   },
   loading: false,
   error: null,
+};
+
+const isNotFoundError = (error: unknown): boolean =>
+  error instanceof Error && /404|not found/i.test(error.message);
+
+const createLocalProject = (userId: string, draft: ProjectDraft): Project => ({
+  id: crypto.randomUUID(),
+  userId,
+  ...draft,
+});
+
+const createLocalTask = (draft: WorkTaskDraft): WorkTask => ({
+  id: crypto.randomUUID(),
+  ...draft,
+});
+
+const createLocalEntry = (userId: string, draft: TimeEntryDraft): TimeEntry => {
+  const now = new Date().toISOString();
+
+  return {
+    id: crypto.randomUUID(),
+    userId,
+    ...draft,
+    createdAt: now,
+    updatedAt: now,
+  };
+};
+
+const storageKey = (userId: string): string => `worktime.data.${userId}`;
+
+const mergeById = <T extends { id: string }>(base: T[], saved: T[]): T[] => {
+  const map = new Map(base.map((item) => [item.id, item]));
+
+  saved.forEach((item) => map.set(item.id, item));
+
+  return [...map.values()];
+};
+
+const readPersistedState = (userId: string): PersistedTimeState => {
+  try {
+    const raw = localStorage.getItem(storageKey(userId));
+
+    if (!raw) {
+      return { projects: [], tasks: [], entries: [] };
+    }
+
+    return JSON.parse(raw) as PersistedTimeState;
+  } catch {
+    localStorage.removeItem(storageKey(userId));
+    return { projects: [], tasks: [], entries: [] };
+  }
+};
+
+const persistState = (
+  userId: string,
+  projects: Project[],
+  tasks: WorkTask[],
+  entries: TimeEntry[],
+): void => {
+  if (!userId) {
+    return;
+  }
+
+  const projectIds = new Set(projects.map((project) => project.id));
+  const state: PersistedTimeState = {
+    projects: projects.filter((project) => project.userId === userId),
+    tasks: tasks.filter((task) => projectIds.has(task.projectId)),
+    entries: entries.filter((entry) => entry.userId === userId),
+  };
+
+  localStorage.setItem(storageKey(userId), JSON.stringify(state));
 };
 
 export const TimeStore = signalStore(
@@ -84,12 +161,23 @@ export const TimeStore = signalStore(
           firstValueFrom(api.getTasks()),
           firstValueFrom(api.getEntries(user.id)),
         ]);
+        const persisted = readPersistedState(user.id);
 
-        patchState(store, { projects, tasks, entries, loading: false });
-      } catch (error) {
         patchState(store, {
+          projects: mergeById(projects, persisted.projects),
+          tasks: mergeById(tasks, persisted.tasks),
+          entries: mergeById(entries, persisted.entries),
           loading: false,
-          error: error instanceof Error ? error.message : 'Load failed',
+        });
+      } catch (error) {
+        const persisted = readPersistedState(user.id);
+
+        patchState(store, {
+          projects: persisted.projects,
+          tasks: persisted.tasks,
+          entries: persisted.entries,
+          loading: false,
+          error: persisted.projects.length || persisted.entries.length ? null : 'Load failed',
         });
       }
     },
@@ -105,29 +193,80 @@ export const TimeStore = signalStore(
         return;
       }
 
-      patchState(store, { loading: true, error: null });
+      const project = createLocalProject(user.id, draft);
+      const projects = [...store.projects(), project];
 
-      try {
-        const project = await firstValueFrom(api.createProject(user.id, draft));
-        patchState(store, { projects: [...store.projects(), project], loading: false });
-      } catch (error) {
-        patchState(store, {
-          loading: false,
-          error: error instanceof Error ? error.message : 'Project create failed',
-        });
+      patchState(store, {
+        projects,
+        loading: false,
+        error: null,
+      });
+      persistState(user.id, projects, store.tasks(), store.entries());
+
+      if (!api.supportsWrites) {
+        return;
       }
+
+      void firstValueFrom(api.createProject(project))
+        .then((created) => {
+          if (created.id === project.id) {
+            return;
+          }
+
+          const projects = store
+            .projects()
+            .map((item) => (item.id === project.id ? created : item));
+          const tasks = store
+            .tasks()
+            .map((task) =>
+              task.projectId === project.id ? { ...task, projectId: created.id } : task,
+            );
+
+          patchState(store, { projects, tasks });
+          persistState(user.id, projects, tasks, store.entries());
+        })
+        .catch(() => undefined);
     },
 
     async updateProject(project: Project): Promise<void> {
+      if (!api.supportsWrites) {
+        const projects = store.projects().map((item) => (item.id === project.id ? project : item));
+
+        patchState(store, {
+          projects,
+          loading: false,
+          error: null,
+        });
+        persistState(project.userId, projects, store.tasks(), store.entries());
+        return;
+      }
+
       patchState(store, { loading: true, error: null });
 
       try {
         const updated = await firstValueFrom(api.updateProject(project));
+        const projects = store.projects().map((item) => (item.id === updated.id ? updated : item));
+
         patchState(store, {
-          projects: store.projects().map((item) => (item.id === updated.id ? updated : item)),
+          projects,
           loading: false,
         });
+        persistState(project.userId, projects, store.tasks(), store.entries());
       } catch (error) {
+        if (isNotFoundError(error)) {
+          const projects = store
+            .projects()
+            .map((item) => (item.id === project.id ? project : item));
+
+          patchState(store, {
+            projects,
+            loading: false,
+            error: null,
+          });
+          persistState(project.userId, projects, store.tasks(), store.entries());
+          return;
+        }
+
         patchState(store, {
           loading: false,
           error: error instanceof Error ? error.message : 'Project update failed',
@@ -145,20 +284,51 @@ export const TimeStore = signalStore(
 
       patchState(store, { loading: true, error: null });
 
-      try {
-        const tasksToDelete = store.tasks().filter((task) => task.projectId === id);
+      const tasksToDelete = store.tasks().filter((task) => task.projectId === id);
 
+      if (!api.supportsWrites) {
+        const projects = store.projects().filter((project) => project.id !== id);
+        const tasks = store.tasks().filter((task) => task.projectId !== id);
+
+        patchState(store, {
+          projects,
+          tasks,
+          loading: false,
+          error: null,
+        });
+        persistState(auth.user()?.id ?? '', projects, tasks, store.entries());
+        return;
+      }
+
+      try {
         await Promise.all([
           firstValueFrom(api.deleteProject(id)),
           ...tasksToDelete.map((task) => firstValueFrom(api.deleteTask(task.id))),
         ]);
+        const projects = store.projects().filter((project) => project.id !== id);
+        const tasks = store.tasks().filter((task) => task.projectId !== id);
 
         patchState(store, {
-          projects: store.projects().filter((project) => project.id !== id),
-          tasks: store.tasks().filter((task) => task.projectId !== id),
+          projects,
+          tasks,
           loading: false,
         });
+        persistState(auth.user()?.id ?? '', projects, tasks, store.entries());
       } catch (error) {
+        if (isNotFoundError(error)) {
+          const projects = store.projects().filter((project) => project.id !== id);
+          const tasks = store.tasks().filter((task) => task.projectId !== id);
+
+          patchState(store, {
+            projects,
+            tasks,
+            loading: false,
+            error: null,
+          });
+          persistState(auth.user()?.id ?? '', projects, tasks, store.entries());
+          return;
+        }
+
         patchState(store, {
           loading: false,
           error: error instanceof Error ? error.message : 'Project delete failed',
@@ -167,29 +337,71 @@ export const TimeStore = signalStore(
     },
 
     async createTask(draft: WorkTaskDraft): Promise<void> {
-      patchState(store, { loading: true, error: null });
+      const task = createLocalTask(draft);
+      const tasks = [...store.tasks(), task];
 
-      try {
-        const task = await firstValueFrom(api.createTask(draft));
-        patchState(store, { tasks: [...store.tasks(), task], loading: false });
-      } catch (error) {
-        patchState(store, {
-          loading: false,
-          error: error instanceof Error ? error.message : 'Task create failed',
-        });
+      patchState(store, {
+        tasks,
+        loading: false,
+        error: null,
+      });
+      persistState(auth.user()?.id ?? '', store.projects(), tasks, store.entries());
+
+      if (!api.supportsWrites) {
+        return;
       }
+
+      void firstValueFrom(api.createTask(task))
+        .then((created) => {
+          if (created.id === task.id) {
+            return;
+          }
+
+          const tasks = store.tasks().map((item) => (item.id === task.id ? created : item));
+
+          patchState(store, { tasks });
+          persistState(auth.user()?.id ?? '', store.projects(), tasks, store.entries());
+        })
+        .catch(() => undefined);
     },
 
     async updateTask(task: WorkTask): Promise<void> {
+      if (!api.supportsWrites) {
+        const tasks = store.tasks().map((item) => (item.id === task.id ? task : item));
+
+        patchState(store, {
+          tasks,
+          loading: false,
+          error: null,
+        });
+        persistState(auth.user()?.id ?? '', store.projects(), tasks, store.entries());
+        return;
+      }
+
       patchState(store, { loading: true, error: null });
 
       try {
         const updated = await firstValueFrom(api.updateTask(task));
+        const tasks = store.tasks().map((item) => (item.id === updated.id ? updated : item));
+
         patchState(store, {
-          tasks: store.tasks().map((item) => (item.id === updated.id ? updated : item)),
+          tasks,
           loading: false,
         });
+        persistState(auth.user()?.id ?? '', store.projects(), tasks, store.entries());
       } catch (error) {
+        if (isNotFoundError(error)) {
+          const tasks = store.tasks().map((item) => (item.id === task.id ? task : item));
+
+          patchState(store, {
+            tasks,
+            loading: false,
+            error: null,
+          });
+          persistState(auth.user()?.id ?? '', store.projects(), tasks, store.entries());
+          return;
+        }
+
         patchState(store, {
           loading: false,
           error: error instanceof Error ? error.message : 'Task update failed',
@@ -207,13 +419,40 @@ export const TimeStore = signalStore(
 
       patchState(store, { loading: true, error: null });
 
+      if (!api.supportsWrites) {
+        const tasks = store.tasks().filter((task) => task.id !== id);
+
+        patchState(store, {
+          tasks,
+          loading: false,
+          error: null,
+        });
+        persistState(auth.user()?.id ?? '', store.projects(), tasks, store.entries());
+        return;
+      }
+
       try {
         await firstValueFrom(api.deleteTask(id));
+        const tasks = store.tasks().filter((task) => task.id !== id);
+
         patchState(store, {
-          tasks: store.tasks().filter((task) => task.id !== id),
+          tasks,
           loading: false,
         });
+        persistState(auth.user()?.id ?? '', store.projects(), tasks, store.entries());
       } catch (error) {
+        if (isNotFoundError(error)) {
+          const tasks = store.tasks().filter((task) => task.id !== id);
+
+          patchState(store, {
+            tasks,
+            loading: false,
+            error: null,
+          });
+          persistState(auth.user()?.id ?? '', store.projects(), tasks, store.entries());
+          return;
+        }
+
         patchState(store, {
           loading: false,
           error: error instanceof Error ? error.message : 'Task delete failed',
@@ -230,9 +469,21 @@ export const TimeStore = signalStore(
 
       patchState(store, { loading: true, error: null });
 
+      if (!api.supportsWrites) {
+        const entry = createLocalEntry(user.id, draft);
+        const entries = [entry, ...store.entries()];
+
+        patchState(store, { entries, loading: false, error: null });
+        persistState(user.id, store.projects(), store.tasks(), entries);
+        return;
+      }
+
       try {
         const entry = await firstValueFrom(api.createEntry(user.id, draft));
-        patchState(store, { entries: [entry, ...store.entries()], loading: false });
+        const entries = [entry, ...store.entries()];
+
+        patchState(store, { entries, loading: false });
+        persistState(user.id, store.projects(), store.tasks(), entries);
       } catch (error) {
         patchState(store, {
           loading: false,
@@ -242,15 +493,43 @@ export const TimeStore = signalStore(
     },
 
     async updateEntry(entry: TimeEntry): Promise<void> {
+      if (!api.supportsWrites) {
+        const updated = { ...entry, updatedAt: new Date().toISOString() };
+        const entries = store.entries().map((item) => (item.id === updated.id ? updated : item));
+
+        patchState(store, {
+          entries,
+          loading: false,
+          error: null,
+        });
+        persistState(auth.user()?.id ?? '', store.projects(), store.tasks(), entries);
+        return;
+      }
+
       patchState(store, { loading: true, error: null });
 
       try {
         const updated = await firstValueFrom(api.updateEntry(entry));
+        const entries = store.entries().map((item) => (item.id === updated.id ? updated : item));
+
         patchState(store, {
-          entries: store.entries().map((item) => (item.id === updated.id ? updated : item)),
+          entries,
           loading: false,
         });
+        persistState(auth.user()?.id ?? '', store.projects(), store.tasks(), entries);
       } catch (error) {
+        if (isNotFoundError(error)) {
+          const entries = store.entries().map((item) => (item.id === entry.id ? entry : item));
+
+          patchState(store, {
+            entries,
+            loading: false,
+            error: null,
+          });
+          persistState(auth.user()?.id ?? '', store.projects(), store.tasks(), entries);
+          return;
+        }
+
         patchState(store, {
           loading: false,
           error: error instanceof Error ? error.message : 'Update failed',
@@ -261,13 +540,40 @@ export const TimeStore = signalStore(
     async deleteEntry(id: string): Promise<void> {
       patchState(store, { loading: true, error: null });
 
+      if (!api.supportsWrites) {
+        const entries = store.entries().filter((entry) => entry.id !== id);
+
+        patchState(store, {
+          entries,
+          loading: false,
+          error: null,
+        });
+        persistState(auth.user()?.id ?? '', store.projects(), store.tasks(), entries);
+        return;
+      }
+
       try {
         await firstValueFrom(api.deleteEntry(id));
+        const entries = store.entries().filter((entry) => entry.id !== id);
+
         patchState(store, {
-          entries: store.entries().filter((entry) => entry.id !== id),
+          entries,
           loading: false,
         });
+        persistState(auth.user()?.id ?? '', store.projects(), store.tasks(), entries);
       } catch (error) {
+        if (isNotFoundError(error)) {
+          const entries = store.entries().filter((entry) => entry.id !== id);
+
+          patchState(store, {
+            entries,
+            loading: false,
+            error: null,
+          });
+          persistState(auth.user()?.id ?? '', store.projects(), store.tasks(), entries);
+          return;
+        }
+
         patchState(store, {
           loading: false,
           error: error instanceof Error ? error.message : 'Delete failed',
