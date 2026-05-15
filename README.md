@@ -45,7 +45,7 @@ src/app/core       auth, interceptors, models, API services, Signal Store
 src/app/features   lazy-loaded pages: login, dashboard, entries, projects, reports, settings
 src/app/shared     reusable UI components
 mock-server        json-server seed data
-docs               plan, UX concept, prototype, git history notes
+docs               plan, UX concept, Figma prototype, git history notes
 e2e                Playwright component scenarios
 ```
 

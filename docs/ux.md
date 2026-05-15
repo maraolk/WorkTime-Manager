@@ -44,4 +44,6 @@
 
 ## Figma/Unidraw/Miro (прототип)
 
-[Low-fi прототип экранов](./prototype.md)
+[Figma-прототип WorkTime Manager](https://www.figma.com/design/10bPXsFcn28YLrJy2IPbgp)
+
+Дополнительно: [описание low-fi экранов и переходов](./prototype.md).
