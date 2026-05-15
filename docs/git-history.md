@@ -8,13 +8,15 @@
 
 Branch names do not use the word `codex`.
 
-## Suggested merge request chain
+## Merge request chain
 
 1. `feature/auth-validation` into `feature/worktime-manager`
+   - Pull request: https://github.com/maraolk/WorkTime-Manager/pull/1
    - Compare link: https://github.com/maraolk/WorkTime-Manager/compare/feature/worktime-manager...feature/auth-validation?quick_pull=1
    - Scope: auth validation, forgot password UX, delete confirmations, report statuses, weekly dashboard metric, updated tests and docs.
 
 2. `feature/worktime-manager` into `main`
+   - Pull request: https://github.com/maraolk/WorkTime-Manager/pull/2
    - Compare link: https://github.com/maraolk/WorkTime-Manager/compare/main...feature/worktime-manager?quick_pull=1
    - Scope: main Angular application, mock API, auth flow, Signal Store, CRUD, reports, CI/CD and deployment docs.
 
@@ -30,4 +32,4 @@ Branch names do not use the word `codex`.
 
 ## Notes for defense
 
-The history is intentionally split into small commits by topic. During the defense, show `git log --oneline --decorate` and the compare links above to explain how the work can be reviewed as merge requests.
+The history is intentionally split into small commits by topic. During the defense, show `git log --oneline --decorate` and the pull request links above to explain how the work can be reviewed as merge requests.
