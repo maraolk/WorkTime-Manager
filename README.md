@@ -45,7 +45,7 @@ src/app/core       auth, interceptors, models, API services, Signal Store
 src/app/features   lazy-loaded pages: login, dashboard, entries, projects, reports, settings
 src/app/shared     reusable UI components
 mock-server        json-server seed data
-docs               plan, UX concept, prototype
+docs               plan, UX concept, prototype, git history notes
 e2e                Playwright component scenarios
 ```
 
@@ -59,3 +59,4 @@ For GitHub Actions Vercel deploy, add repository secrets: `VERCEL_TOKEN`, `VERCE
 
 Lighthouse mobile report: [`docs/lighthouse.report.html`](docs/lighthouse.report.html)  
 Lighthouse screenshot: [`docs/lighthouse-summary.png`](docs/lighthouse-summary.png)
+Git history and merge request notes: [`docs/git-history.md`](docs/git-history.md)

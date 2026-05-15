@@ -23,6 +23,7 @@
 | Lighthouse >= 80                   | Готово | SEO 82, Best Practices 100, `docs/lighthouse-summary.png` |
 | README с инструкцией               | Готово | `README.md`                                               |
 | История коммитов не одним коммитом | Готово | Conventional Commits в `git log`                          |
+| Ветки и MR/PR ссылки               | Готово | `docs/git-history.md`                                     |
 
 ## Проверки
 
