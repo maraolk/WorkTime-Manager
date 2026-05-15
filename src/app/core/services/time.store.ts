@@ -60,6 +60,18 @@ const createLocalTask = (draft: WorkTaskDraft): WorkTask => ({
   ...draft,
 });
 
+const createLocalEntry = (userId: string, draft: TimeEntryDraft): TimeEntry => {
+  const now = new Date().toISOString();
+
+  return {
+    id: crypto.randomUUID(),
+    userId,
+    ...draft,
+    createdAt: now,
+    updatedAt: now,
+  };
+};
+
 const storageKey = (userId: string): string => `worktime.data.${userId}`;
 
 const mergeById = <T extends { id: string }>(base: T[], saved: T[]): T[] => {
@@ -191,6 +203,10 @@ export const TimeStore = signalStore(
       });
       persistState(user.id, projects, store.tasks(), store.entries());
 
+      if (!api.supportsWrites) {
+        return;
+      }
+
       void firstValueFrom(api.createProject(project))
         .then((created) => {
           if (created.id === project.id) {
@@ -213,6 +229,18 @@ export const TimeStore = signalStore(
     },
 
     async updateProject(project: Project): Promise<void> {
+      if (!api.supportsWrites) {
+        const projects = store.projects().map((item) => (item.id === project.id ? project : item));
+
+        patchState(store, {
+          projects,
+          loading: false,
+          error: null,
+        });
+        persistState(project.userId, projects, store.tasks(), store.entries());
+        return;
+      }
+
       patchState(store, { loading: true, error: null });
 
       try {
@@ -257,6 +285,20 @@ export const TimeStore = signalStore(
       patchState(store, { loading: true, error: null });
 
       const tasksToDelete = store.tasks().filter((task) => task.projectId === id);
+
+      if (!api.supportsWrites) {
+        const projects = store.projects().filter((project) => project.id !== id);
+        const tasks = store.tasks().filter((task) => task.projectId !== id);
+
+        patchState(store, {
+          projects,
+          tasks,
+          loading: false,
+          error: null,
+        });
+        persistState(auth.user()?.id ?? '', projects, tasks, store.entries());
+        return;
+      }
 
       try {
         await Promise.all([
@@ -305,6 +347,10 @@ export const TimeStore = signalStore(
       });
       persistState(auth.user()?.id ?? '', store.projects(), tasks, store.entries());
 
+      if (!api.supportsWrites) {
+        return;
+      }
+
       void firstValueFrom(api.createTask(task))
         .then((created) => {
           if (created.id === task.id) {
@@ -320,6 +366,18 @@ export const TimeStore = signalStore(
     },
 
     async updateTask(task: WorkTask): Promise<void> {
+      if (!api.supportsWrites) {
+        const tasks = store.tasks().map((item) => (item.id === task.id ? task : item));
+
+        patchState(store, {
+          tasks,
+          loading: false,
+          error: null,
+        });
+        persistState(auth.user()?.id ?? '', store.projects(), tasks, store.entries());
+        return;
+      }
+
       patchState(store, { loading: true, error: null });
 
       try {
@@ -361,6 +419,18 @@ export const TimeStore = signalStore(
 
       patchState(store, { loading: true, error: null });
 
+      if (!api.supportsWrites) {
+        const tasks = store.tasks().filter((task) => task.id !== id);
+
+        patchState(store, {
+          tasks,
+          loading: false,
+          error: null,
+        });
+        persistState(auth.user()?.id ?? '', store.projects(), tasks, store.entries());
+        return;
+      }
+
       try {
         await firstValueFrom(api.deleteTask(id));
         const tasks = store.tasks().filter((task) => task.id !== id);
@@ -399,6 +469,15 @@ export const TimeStore = signalStore(
 
       patchState(store, { loading: true, error: null });
 
+      if (!api.supportsWrites) {
+        const entry = createLocalEntry(user.id, draft);
+        const entries = [entry, ...store.entries()];
+
+        patchState(store, { entries, loading: false, error: null });
+        persistState(user.id, store.projects(), store.tasks(), entries);
+        return;
+      }
+
       try {
         const entry = await firstValueFrom(api.createEntry(user.id, draft));
         const entries = [entry, ...store.entries()];
@@ -414,6 +493,19 @@ export const TimeStore = signalStore(
     },
 
     async updateEntry(entry: TimeEntry): Promise<void> {
+      if (!api.supportsWrites) {
+        const updated = { ...entry, updatedAt: new Date().toISOString() };
+        const entries = store.entries().map((item) => (item.id === updated.id ? updated : item));
+
+        patchState(store, {
+          entries,
+          loading: false,
+          error: null,
+        });
+        persistState(auth.user()?.id ?? '', store.projects(), store.tasks(), entries);
+        return;
+      }
+
       patchState(store, { loading: true, error: null });
 
       try {
@@ -447,6 +539,18 @@ export const TimeStore = signalStore(
 
     async deleteEntry(id: string): Promise<void> {
       patchState(store, { loading: true, error: null });
+
+      if (!api.supportsWrites) {
+        const entries = store.entries().filter((entry) => entry.id !== id);
+
+        patchState(store, {
+          entries,
+          loading: false,
+          error: null,
+        });
+        persistState(auth.user()?.id ?? '', store.projects(), store.tasks(), entries);
+        return;
+      }
 
       try {
         await firstValueFrom(api.deleteEntry(id));

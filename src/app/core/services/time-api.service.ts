@@ -15,6 +15,7 @@ import {
 export class TimeApiService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = environment.apiUrl;
+  readonly supportsWrites = !environment.apiUrl.startsWith('/api');
 
   getProjects(userId: string) {
     return this.http.get<Project[]>(`${this.apiUrl}/projects`, { params: { userId } });
