@@ -10,6 +10,26 @@ test('login opens dashboard', async ({ page }) => {
   await expect(page.getByRole('heading', { name: /work dashboard/i })).toBeVisible();
 });
 
+test('user can track time with timer', async ({ page }) => {
+  const description = `Timer demo ${Date.now()}`;
+
+  await page.goto('/login');
+  await page.getByLabel('Email').fill('arina@example.com');
+  await page.getByLabel('Password').fill('password');
+  await page.getByRole('button', { name: /sign in/i }).click();
+
+  await page.locator('select').first().selectOption({ label: 'Client Portal' });
+  await page.locator('select').nth(1).selectOption({ label: 'Auth flow' });
+  await page.getByPlaceholder('Short work summary').fill(description);
+  await page.getByRole('button', { name: /^start$/i }).click();
+
+  await expect(page.getByText(/min running/i)).toBeVisible();
+
+  await page.getByRole('button', { name: /stop and save/i }).click();
+
+  await expect(page.getByText(description)).toBeVisible();
+});
+
 test('user can filter time entries', async ({ page }) => {
   await page.goto('/login');
   await page.getByLabel('Email').fill('arina@example.com');
