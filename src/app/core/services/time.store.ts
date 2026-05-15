@@ -43,6 +43,17 @@ const initialState: TimeState = {
 const isNotFoundError = (error: unknown): boolean =>
   error instanceof Error && /404|not found/i.test(error.message);
 
+const createLocalProject = (userId: string, draft: ProjectDraft): Project => ({
+  id: crypto.randomUUID(),
+  userId,
+  ...draft,
+});
+
+const createLocalTask = (draft: WorkTaskDraft): WorkTask => ({
+  id: crypto.randomUUID(),
+  ...draft,
+});
+
 export const TimeStore = signalStore(
   { providedIn: 'root' },
   withState(initialState),
@@ -108,17 +119,30 @@ export const TimeStore = signalStore(
         return;
       }
 
-      patchState(store, { loading: true, error: null });
+      const project = createLocalProject(user.id, draft);
 
-      try {
-        const project = await firstValueFrom(api.createProject(user.id, draft));
-        patchState(store, { projects: [...store.projects(), project], loading: false });
-      } catch (error) {
-        patchState(store, {
-          loading: false,
-          error: error instanceof Error ? error.message : 'Project create failed',
-        });
-      }
+      patchState(store, {
+        projects: [...store.projects(), project],
+        loading: false,
+        error: null,
+      });
+
+      void firstValueFrom(api.createProject(project))
+        .then((created) => {
+          if (created.id === project.id) {
+            return;
+          }
+
+          patchState(store, {
+            projects: store.projects().map((item) => (item.id === project.id ? created : item)),
+            tasks: store
+              .tasks()
+              .map((task) =>
+                task.projectId === project.id ? { ...task, projectId: created.id } : task,
+              ),
+          });
+        })
+        .catch(() => undefined);
     },
 
     async updateProject(project: Project): Promise<void> {
@@ -189,17 +213,25 @@ export const TimeStore = signalStore(
     },
 
     async createTask(draft: WorkTaskDraft): Promise<void> {
-      patchState(store, { loading: true, error: null });
+      const task = createLocalTask(draft);
 
-      try {
-        const task = await firstValueFrom(api.createTask(draft));
-        patchState(store, { tasks: [...store.tasks(), task], loading: false });
-      } catch (error) {
-        patchState(store, {
-          loading: false,
-          error: error instanceof Error ? error.message : 'Task create failed',
-        });
-      }
+      patchState(store, {
+        tasks: [...store.tasks(), task],
+        loading: false,
+        error: null,
+      });
+
+      void firstValueFrom(api.createTask(task))
+        .then((created) => {
+          if (created.id === task.id) {
+            return;
+          }
+
+          patchState(store, {
+            tasks: store.tasks().map((item) => (item.id === task.id ? created : item)),
+          });
+        })
+        .catch(() => undefined);
     },
 
     async updateTask(task: WorkTask): Promise<void> {

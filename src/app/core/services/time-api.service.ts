@@ -24,13 +24,7 @@ export class TimeApiService {
     return this.http.get<WorkTask[]>(`${this.apiUrl}/tasks`);
   }
 
-  createProject(userId: string, draft: ProjectDraft) {
-    const project: Project = {
-      id: crypto.randomUUID(),
-      userId,
-      ...draft,
-    };
-
+  createProject(project: Project) {
     return this.http.post<Project>(`${this.apiUrl}/projects`, project);
   }
 
@@ -42,12 +36,7 @@ export class TimeApiService {
     return this.http.delete<void>(`${this.apiUrl}/projects/${id}`);
   }
 
-  createTask(draft: WorkTaskDraft) {
-    const task: WorkTask = {
-      id: crypto.randomUUID(),
-      ...draft,
-    };
-
+  createTask(task: WorkTask) {
     return this.http.post<WorkTask>(`${this.apiUrl}/tasks`, task);
   }
 
