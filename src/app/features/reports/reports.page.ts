@@ -109,23 +109,30 @@ export class ReportsPage implements OnInit {
   }
 
   protected exportCsv(): void {
-    const csv = this.reports.toCsv(this.store.filteredEntries(), this.store.projects());
+    const csv = `\uFEFF${this.reports.toCsv(this.store.filteredEntries(), this.store.projects())}`;
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
 
-    link.href = URL.createObjectURL(blob);
+    link.href = url;
     link.download = this.reportFilename();
+    link.style.display = 'none';
+    document.body.append(link);
     link.click();
-    URL.revokeObjectURL(link.href);
+    link.remove();
+    URL.revokeObjectURL(url);
   }
 
   protected reportFilename(): string {
     const { dateFrom, dateTo, projectId } = this.store.filters();
     const period = dateFrom || dateTo ? `${dateFrom || 'start'}-${dateTo || 'today'}` : 'all-time';
     const project = projectId
-      ? this.store.projects().find((item) => item.id === projectId)?.name ?? 'project'
+      ? (this.store.projects().find((item) => item.id === projectId)?.name ?? 'project')
       : 'all-projects';
-    const safeProject = project.toLowerCase().replaceAll(/[^a-z0-9]+/g, '-').replaceAll(/(^-|-$)/g, '');
+    const safeProject = project
+      .toLowerCase()
+      .replaceAll(/[^a-z0-9]+/g, '-')
+      .replaceAll(/(^-|-$)/g, '');
 
     return `worktime-report-${safeProject}-${period}.csv`;
   }

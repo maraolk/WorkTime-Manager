@@ -40,6 +40,9 @@ const initialState: TimeState = {
   error: null,
 };
 
+const isNotFoundError = (error: unknown): boolean =>
+  error instanceof Error && /404|not found/i.test(error.message);
+
 export const TimeStore = signalStore(
   { providedIn: 'root' },
   withState(initialState),
@@ -128,6 +131,15 @@ export const TimeStore = signalStore(
           loading: false,
         });
       } catch (error) {
+        if (isNotFoundError(error)) {
+          patchState(store, {
+            projects: store.projects().map((item) => (item.id === project.id ? project : item)),
+            loading: false,
+            error: null,
+          });
+          return;
+        }
+
         patchState(store, {
           loading: false,
           error: error instanceof Error ? error.message : 'Project update failed',
@@ -145,9 +157,9 @@ export const TimeStore = signalStore(
 
       patchState(store, { loading: true, error: null });
 
-      try {
-        const tasksToDelete = store.tasks().filter((task) => task.projectId === id);
+      const tasksToDelete = store.tasks().filter((task) => task.projectId === id);
 
+      try {
         await Promise.all([
           firstValueFrom(api.deleteProject(id)),
           ...tasksToDelete.map((task) => firstValueFrom(api.deleteTask(task.id))),
@@ -159,6 +171,16 @@ export const TimeStore = signalStore(
           loading: false,
         });
       } catch (error) {
+        if (isNotFoundError(error)) {
+          patchState(store, {
+            projects: store.projects().filter((project) => project.id !== id),
+            tasks: store.tasks().filter((task) => task.projectId !== id),
+            loading: false,
+            error: null,
+          });
+          return;
+        }
+
         patchState(store, {
           loading: false,
           error: error instanceof Error ? error.message : 'Project delete failed',
@@ -190,6 +212,15 @@ export const TimeStore = signalStore(
           loading: false,
         });
       } catch (error) {
+        if (isNotFoundError(error)) {
+          patchState(store, {
+            tasks: store.tasks().map((item) => (item.id === task.id ? task : item)),
+            loading: false,
+            error: null,
+          });
+          return;
+        }
+
         patchState(store, {
           loading: false,
           error: error instanceof Error ? error.message : 'Task update failed',
@@ -214,6 +245,15 @@ export const TimeStore = signalStore(
           loading: false,
         });
       } catch (error) {
+        if (isNotFoundError(error)) {
+          patchState(store, {
+            tasks: store.tasks().filter((task) => task.id !== id),
+            loading: false,
+            error: null,
+          });
+          return;
+        }
+
         patchState(store, {
           loading: false,
           error: error instanceof Error ? error.message : 'Task delete failed',
@@ -251,6 +291,15 @@ export const TimeStore = signalStore(
           loading: false,
         });
       } catch (error) {
+        if (isNotFoundError(error)) {
+          patchState(store, {
+            entries: store.entries().map((item) => (item.id === entry.id ? entry : item)),
+            loading: false,
+            error: null,
+          });
+          return;
+        }
+
         patchState(store, {
           loading: false,
           error: error instanceof Error ? error.message : 'Update failed',
@@ -268,6 +317,15 @@ export const TimeStore = signalStore(
           loading: false,
         });
       } catch (error) {
+        if (isNotFoundError(error)) {
+          patchState(store, {
+            entries: store.entries().filter((entry) => entry.id !== id),
+            loading: false,
+            error: null,
+          });
+          return;
+        }
+
         patchState(store, {
           loading: false,
           error: error instanceof Error ? error.message : 'Delete failed',

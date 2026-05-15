@@ -95,8 +95,7 @@ export class AuthService {
 
     return this.http.get<User[]>(`${environment.apiUrl}/users`, { params: { email } }).pipe(
       map((users): PasswordRecovery => {
-        const user =
-          users.at(0) ?? this.readRegisteredUsers().find((item) => item.email === email);
+        const user = users.at(0) ?? this.readRegisteredUsers().find((item) => item.email === email);
 
         if (!user) {
           throw new Error('No account found for this email');
@@ -125,9 +124,15 @@ export class AuthService {
       return;
     }
 
-    const next = { ...user, dailyGoalHours: hours };
+    const next = { ...user, dailyGoalHours: Math.min(16, Math.max(1, Math.round(hours))) };
     this.userState.set(next);
     localStorage.setItem(USER_KEY, JSON.stringify(next));
+
+    const registeredUser = this.readRegisteredUsers().find((item) => item.id === next.id);
+
+    if (registeredUser) {
+      this.saveRegisteredUser({ ...registeredUser, dailyGoalHours: next.dailyGoalHours });
+    }
   }
 
   private persistSession(session: AuthSession): void {

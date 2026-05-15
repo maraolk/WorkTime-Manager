@@ -243,6 +243,7 @@ th {
 
 .form-error,
 .form-info,
+.success-message,
 .banner-error {
   margin: 0;
   border-radius: 8px;
@@ -256,7 +257,8 @@ th {
   color: var(--danger);
 }
 
-.form-info {
+.form-info,
+.success-message {
   border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--line));
   background: color-mix(in srgb, var(--accent) 9%, #fff);
   color: var(--accent-strong);
